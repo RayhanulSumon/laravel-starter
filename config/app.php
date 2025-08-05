@@ -1,7 +1,8 @@
 <?php
 
-return [
+use Illuminate\Auth\Middleware\Authenticate;
 
+return [
     /*
     |--------------------------------------------------------------------------
     | Application Name
@@ -123,4 +124,20 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Middleware Aliases
+    |--------------------------------------------------------------------------
+    |
+    | Here you may specify middleware aliases for your application. These aliases
+    | may be used in your route files to assign middleware to groups or routes.
+    |
+    */
+
+    'middlewareAliases' => [
+        'role' => App\Http\Middleware\RoleMiddleware::class,
+        'admin' => [Authenticate::class, App\Http\Middleware\AdminMiddleware::class],
+        'super-admin' => [Authenticate::class, App\Http\Middleware\SuperAdminMiddleware::class],
+        // Add other middleware aliases here
+    ],
 ];
