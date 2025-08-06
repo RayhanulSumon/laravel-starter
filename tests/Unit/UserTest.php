@@ -1,43 +1,68 @@
 <?php
 
+use App\Enums\UserRole;
+use App\Models\User;
+use Carbon\Carbon;
+
 uses(Tests\TestCase::class, Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 describe('User Model', function () {
-    it('can create a user and assign attributes', function () {
-        $user = \App\Models\User::factory()->create([
+    it('creates a user with correct attributes', function () {
+        $user = User::factory()->create([
             'name' => 'Unit Test',
             'email' => 'unit@example.com',
             'phone' => '1234567899',
-            'role' => \App\Enums\UserRole::ADMIN->value,
+            'role' => UserRole::ADMIN->value,
         ]);
-        expect($user->name)->toBe('Unit Test');
-        expect($user->email)->toBe('unit@example.com');
-        expect($user->phone)->toBe('1234567899');
-        expect($user->role)->toBe(\App\Enums\UserRole::ADMIN);
+        // Check all attributes in a single array assertion
+        expect([
+            $user->getAttribute('name'),
+            $user->getAttribute('email'),
+            $user->getAttribute('phone'),
+            $user->getAttribute('role') instanceof UserRole,
+            $user->getAttribute('role')->value,
+        ])->toMatchArray([
+            'Unit Test',
+            'unit@example.com',
+            '1234567899',
+            true,
+            UserRole::ADMIN->value,
+        ]);
     });
 
     it('finds user by email or phone', function () {
-        $user = \App\Models\User::factory()->create([
+        $user = User::factory()->create([
             'email' => 'findme@example.com',
             'phone' => '5555555555',
         ]);
-        $byEmail = \App\Models\User::findByEmailOrPhone('findme@example.com');
-        $byPhone = \App\Models\User::findByEmailOrPhone('5555555555');
-        expect($byEmail->id)->toBe($user->id);
-        expect($byPhone->id)->toBe($user->id);
+        foreach ([
+            'findme@example.com',
+            '5555555555',
+        ] as $identifier) {
+            $foundUser = User::findByEmailOrPhone($identifier);
+            expect([
+                $foundUser->getAttribute('id'),
+                $foundUser->getAttribute('phone'),
+                $foundUser->getAttribute('email'),
+            ])->toMatchArray([
+                $user->getAttribute('id'),
+                $user->getAttribute('phone'),
+                $user->getAttribute('email'),
+            ]);
+        }
     });
 
     it('returns correct role value', function () {
-        $user = \App\Models\User::factory()->create([
-            'role' => \App\Enums\UserRole::SUPER_ADMIN->value,
+        $user = User::factory()->create([
+            'role' => UserRole::SUPER_ADMIN->value,
         ]);
         expect($user->getRoleValue())->toBe('super-admin');
     });
 
-    it('casts email_verified_at to datetime', function () {
-        $user = \App\Models\User::factory()->create([
+    it('casts email_verified_at to Carbon instance', function () {
+        $user = User::factory()->create([
             'email_verified_at' => now(),
         ]);
-        expect($user->email_verified_at)->toBeInstanceOf(\Carbon\Carbon::class);
+        expect($user->getAttribute('email_verified_at'))->toBeInstanceOf(Carbon::class);
     });
 });
