@@ -4,14 +4,16 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    /** @use HasFactory<UserFactory> */
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -23,6 +25,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'phone',
     ];
 
     /**
@@ -47,5 +50,28 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
         ];
+    }
+
+    /**
+     * Find a user by email or phone.
+     *
+     * @param string $identifier
+     * @return User|null
+     */
+    public static function findByEmailOrPhone(string $identifier): ?self
+    {
+        return self::query()
+            ->where('email', $identifier)
+            ->orWhere('phone', $identifier)
+            ->first();
+    }
+
+    /**
+     * Get the string value of the user's role.
+     */
+    public function getRoleValue(): string
+    {
+        $role = $this->getAttribute('role');
+        return $role instanceof UserRole ? $role->value : (string) $role;
     }
 }
