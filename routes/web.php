@@ -8,3 +8,7 @@ Route::get('/', function () {
         'status' => 'success'
     ]);
 });
+
+Route::get('/reset-password/{token}', function ($token) {
+    return "Password reset token: $token";
+})->name('password.reset');
