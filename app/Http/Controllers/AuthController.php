@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\UserRole;
 use App\Http\Requests\RegisterRequest;
 use App\Models\User;
+use App\Notifications\NewUserRegistered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -21,9 +22,17 @@ class AuthController extends Controller
         $user = User::query()->create([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'phone' => $validated['phone'],
             'password' => Hash::make($validated['password']),
             'role' => isset($validated['role']) ? UserRole::tryFrom($validated['role'])->value : UserRole::USER->value,
         ]);
+
+        // Send notification (broadcast + database)
+        $user->notify(new NewUserRegistered(
+            $user->getAttribute('name'),
+            $user->getAttribute('email'),
+            $user->getAttribute('phone')
+        ));
 
         $token = $user->createToken('api-token', [$user->getRoleValue()])->plainTextToken;
 
